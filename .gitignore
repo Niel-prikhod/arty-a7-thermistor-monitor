@@ -1,0 +1,7 @@
+hw/microblaze_soft_core
+.Xil
+*.log
+*.jou
+
+hw/prebuilt/
+
