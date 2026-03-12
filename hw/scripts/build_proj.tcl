@@ -92,7 +92,7 @@ if { $validate_required } {
 }
 
 # Create project
-create_project ${_xil_proj_name_} ./${_xil_proj_name_} -part xa7a100tcsg324-1I
+create_project ${_xil_proj_name_} "${origin_dir}/hw/${_xil_proj_name_}" -part xa7a100tcsg324-1I
 
 # Set the directory path for the new project
 set proj_dir [get_property directory [current_project]]
@@ -130,7 +130,7 @@ set obj [get_filesets sources_1]
 source "$script_dir/create_bd.tcl"
 
 # Now that the BD is created in memory, we generate the HDL wrapper
-set design_name [get_bd_designs]
+set design_name "system_bd"
 make_wrapper -files [get_files $design_name.bd] -top
 add_files -norecurse [file normalize "${origin_dir}/hw/${_xil_proj_name_}/${_xil_proj_name_}.gen/sources_1/bd/$design_name/hdl/${design_name}_wrapper.v"]
 update_compile_order -fileset sources_1
@@ -505,3 +505,18 @@ move_dashboard_gadget -name {drc_1} -row 2 -col 0
 move_dashboard_gadget -name {timing_1} -row 0 -col 1
 move_dashboard_gadget -name {utilization_2} -row 1 -col 1
 move_dashboard_gadget -name {methodology_1} -row 2 -col 1
+
+# --- Launch Synthesis ---
+launch_runs synth_1 -jobs 8
+wait_on_run synth_1
+
+# --- Launch Implementation & Bitstream ---
+launch_runs impl_1 -to_step write_bitstream -jobs 8
+wait_on_run impl_1
+
+# --- Export Hardware (.xsa) ---
+# This is what Vitis needs. We put it in hw/prebuilt/
+file mkdir "${origin_dir}/hw/prebuilt"
+write_hw_platform -fixed -force -file "${origin_dir}/hw/prebuilt/system.xsa"
+
+puts "BUILD COMPLETE! Your hardware is ready at hw/prebuilt/system.xsa"
