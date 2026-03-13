@@ -518,5 +518,6 @@ wait_on_run impl_1
 # This is what Vitis needs. We put it in hw/prebuilt/
 file mkdir "${origin_dir}/hw/prebuilt"
 write_hw_platform -fixed -force -file "${origin_dir}/hw/prebuilt/system.xsa"
+file copy -force "${origin_dir}/hw/${_xil_proj_name_}/${_xil_proj_name_}.runs/impl_1/system_bd_wrapper.bit" "${origin_dir}/hw/prebuilt/system.bit"
 
 puts "BUILD COMPLETE! Your hardware is ready at hw/prebuilt/system.xsa"
