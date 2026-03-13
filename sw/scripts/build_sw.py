@@ -24,11 +24,11 @@ def force_clean_component(name):
             client.delete_component(name=name)
     except:
         pass
+
 app_name = "thermistor_app"
 platform_name = "arty_platform"
-force_clean_component(platform_name)
 
-# 2. Create the Platform Component
+force_clean_component(platform_name)
 platform = client.create_platform_component(
     name=platform_name,
     hw_design=xsa_path,
@@ -36,7 +36,7 @@ platform = client.create_platform_component(
     cpu="microblaze_0"
 )
 
-# 3. Create the Application Component
+force_clean_component(app_name)
 app = client.create_app_component(
     name=app_name,
     platform=os.path.join(workspace, "arty_platform", "export", "arty_platform", "arty_platform.xpfm"),
@@ -46,8 +46,8 @@ app = client.create_app_component(
 # 4. Import your custom C code
 app.import_files(
     from_loc=os.path.join(repo_root, "sw", "src"),
-    files=["main.c"],
-    dest_dir="src"
+    files=["main.c"]
+    # dest_dir="src"
 )
 
 # 5. Build the components
@@ -57,6 +57,7 @@ app.build()
 print("Vitis build complete! ELF file is ready.")
 
 elf_src = os.path.join(workspace, app_name, "build", f"{app_name}.elf")
+os.makedirs(os.path.join(repo_root, "sw/prebuilt"), exist_ok=True)
 elf_dst = os.path.join(repo_root, "sw/prebuilt/thermistor.elf")
 
 if os.path.exists(elf_src):

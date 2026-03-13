@@ -1,6 +1,7 @@
 connect
-targets -set -filter {name =~ "microblaze*"}
+# targets -set -filter {name =~ "MicroBlaze*"}
+targets 3
 rst -processor
-dow "hw/prebuilt/thermistor.elf"
+dow "sw/prebuilt/thermistor.elf"
 con
 exit
