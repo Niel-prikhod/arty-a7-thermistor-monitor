@@ -8,6 +8,18 @@
 
 #define VAUX4_CHANNEL (XSM_CH_AUX_MIN + 4)
 
+#define V_REF 3.3f
+#define RESISTOR 10e4
+#define SH_EQ_C1 1.129148e-3
+#define SH_EQ_C2 2.34125e-4
+#define SH_EQ_C3 8.76741e-8
+#define ABS_ZERO 273.15
+
+typedef struct signal_s {
+	float	resistance;
+	float	temperature;
+}	signal_t;
+
 XSysMon SysMonInst;
 
 int init_xadc() {
@@ -47,7 +59,19 @@ int init_xadc() {
     return XST_SUCCESS;
 }
 
+signal_t calc_physics(float voltage) {
+	signal_t	signal;
+	float		logR;
+
+	signal.resistance = voltage * RESISTOR / (V_REF - voltage);
+	logR = logf(signal.resistance);
+	signal.temperature = (1.0 / (SH_EQ_C1 + SH_EQ_C2 * logR + SH_EQ_C3 * logR * logR * logR)) - ABS_ZERO;
+	return signal;
+}
+
 int main() {
+	signal_t signal;
+
     printf("\r\n--- Arty A7 Thermistor Monitor Started ---\r\n");
 
     if (init_xadc() != XST_SUCCESS) {
@@ -66,7 +90,7 @@ int main() {
 
         // 3. Convert to Voltage (XADC max range is 1.0V at a value of 4096)
         // We cast to (float) to prevent standard integer division (which would result in 0)
-        float voltage = (float)adc_12bit / 4096.0f;
+        float voltage = ((float)adc_12bit / 4096.0f) * V_REF;
 
         // Prevent division by zero if the pin is shorted to ground
         if (voltage <= 0.01f) {
@@ -75,25 +99,13 @@ int main() {
             continue;
         }
 
-        // 4. Calculate Thermistor Resistance
-        // Assuming: 1.0V -> Thermistor -> A0 (VAUX4) -> 10k Resistor -> GND
-        float resistance = 10000.0f * ((1.0f / voltage) - 1.0f);
-
-        // 5. Calculate Temperature using the Steinhart-Hart equation
-        float steinhart;
-        steinhart = resistance / 10000.0f;            // (R/Ro)
-        steinhart = log(steinhart);                   // ln(R/Ro)
-        steinhart /= 3950.0f;                         // 1/B * ln(R/Ro)
-        steinhart += 1.0f / (25.0f + 273.15f);        // + (1/To)
-        steinhart = 1.0f / steinhart;                 // Invert
-        steinhart -= 273.15f;                         // Convert Kelvin to Celsius
+		signal = calc_physics(voltage);
 
         // 6. Print the results
         printf("Raw: %4d | Voltage: %.3f V | Res: %6.0f Ohms | Temp: %.2f C\r\n", 
-               adc_12bit, voltage, resistance, steinhart);
+               adc_12bit, voltage, signal.resistance, signal.temperature);
 
-        // Wait 1 second before the next reading
-        sleep(1);
+        sleep(0.1);
     }
 
     return 0;
