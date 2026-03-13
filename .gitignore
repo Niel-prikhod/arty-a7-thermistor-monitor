@@ -4,3 +4,5 @@ hw/microblaze_soft_core
 *.jou
 hw/prebuilt/
 vitis_workspace/
+compile_commands.json
+sw/prebuilt/*elf
