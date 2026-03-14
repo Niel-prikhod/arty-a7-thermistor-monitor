@@ -108,7 +108,7 @@ int main() {
 
         // 6. Print the results
         printf("%4d,%.3f,%d,%.2f\r\n", 
-               adc_12bit, voltage, (int)signal.resistance, signal.temperature);
+               adc_12bit, voltage, signal.resistance, signal.temperature);
 
         sleep(1);
     }
