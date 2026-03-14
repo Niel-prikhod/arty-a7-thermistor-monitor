@@ -1,12 +1,20 @@
 import vitis
 import shutil
 import os
+import sys
 
 # Setup paths relative to the script location
 script_path = os.path.abspath(__file__)
 repo_root = os.path.dirname(os.path.dirname(os.path.dirname(script_path)))
 xsa_path = os.path.join(repo_root, "hw", "prebuilt", "system.xsa")
 workspace = os.path.join(repo_root, "sw/vitis_workspace")
+src_dir = os.path.join(repo_root, "sw/src")
+inc_dir = os.path.join(repo_root, "sw/inc")
+
+if len(sys.argv) > 1:
+    srcs = sys.argv[1:]          
+else:
+    srcs = ["*.c"]
 
 # 1. Create a Vitis client
 client = vitis.create_client()
@@ -43,14 +51,17 @@ app = client.create_app_component(
     domain="standalone_microblaze_0"
 )
 
-# 4. Import your custom C code
-app.import_files(
-    from_loc=os.path.join(repo_root, "sw", "src"),
-    files=["main.c"]
-    # dest_dir="src"
-)
+app.set_app_config(
+    key='USER_INCLUDE_DIRECTORIES',
+    values=inc_dir
+        )
 
-# 5. Build the components
+app.import_files(
+        from_loc=src_dir, 
+        files=srcs,
+        is_skip_copy_sources=True
+        )
+
 platform.build()
 app.build()
 

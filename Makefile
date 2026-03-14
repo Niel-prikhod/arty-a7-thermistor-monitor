@@ -1,5 +1,7 @@
 VIVADO_SCRIPT = hw/scripts/build_proj.tcl
 VITIS_SCRIPT = sw/scripts/build_sw.py
+VITIS_WS = sw/vitis_workspace
+APP_NAME = thermistor_app
 
 all: generate_bitstream generate_elf
 
@@ -8,7 +10,13 @@ generate_bitstream:
 
 generate_elf:
 	vitis -s $(VITIS_SCRIPT)
-	ln -s hw/sw_project/thermistor_app/build/compile_commands.json .
+	ln -s $(VITIS_WS)/thermistor_app/build/compile_commands.json . || true
+
+compile:
+	vitis -s sw/scripts/compile.py
+	cp $(VITIS_WS)/$(APP_NAME)/build/$(APP_NAME).elf sw/prebuilt/thermistor.elf
+
+re: compile program-sw
 
 clean: 
 	rm -rf hw/microblaze_soft_core sw/arty_platform .Xil
