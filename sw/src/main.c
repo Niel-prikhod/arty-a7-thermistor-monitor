@@ -8,12 +8,14 @@
 
 #define VAUX4_CHANNEL (XSM_CH_AUX_MIN + 4)
 
-#define V_REF 3.3f
-#define RESISTOR 10e4
-#define SH_EQ_C1 1.129148e-3
-#define SH_EQ_C2 2.34125e-4
-#define SH_EQ_C3 8.76741e-8
-#define ABS_ZERO 273.15
+#define V_REF		3.3f
+#define RESISTOR	10000.0f
+#define R107		2320
+#define R140		1000
+#define SH_EQ_C1	1.129148e-3
+#define SH_EQ_C2	2.34125e-4
+#define SH_EQ_C3	8.76741e-8
+#define ABS_ZERO	273.15
 
 typedef struct signal_s {
 	float	resistance;
@@ -59,11 +61,14 @@ int init_xadc() {
     return XST_SUCCESS;
 }
 
-signal_t calc_physics(float voltage) {
+signal_t calc_physics(float v_out) {
 	signal_t	signal;
 	float		logR;
+	float		v_sig;
 
-	signal.resistance = voltage * RESISTOR / (V_REF - voltage);
+	v_sig = v_out * (R107 + R140) / R140;
+	signal.resistance = v_sig * RESISTOR / (V_REF - v_sig);
+	// signal.resistance = ((voltage / V_REF) * RESISTOR) / (1.0 - (voltage / V_REF));
 	logR = logf(signal.resistance);
 	signal.temperature = (1.0 / (SH_EQ_C1 + SH_EQ_C2 * logR + SH_EQ_C3 * logR * logR * logR)) - ABS_ZERO;
 	return signal;
@@ -102,10 +107,10 @@ int main() {
 		signal = calc_physics(voltage);
 
         // 6. Print the results
-        printf("Raw: %4d | Voltage: %.3f V | Res: %6.0f Ohms | Temp: %.2f C\r\n", 
-               adc_12bit, voltage, signal.resistance, signal.temperature);
+        printf("%4d,%.3f,%d,%.2f\r\n", 
+               adc_12bit, voltage, (int)signal.resistance, signal.temperature);
 
-        sleep(0.1);
+        sleep(1);
     }
 
     return 0;
